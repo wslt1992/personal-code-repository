@@ -1,5 +1,12 @@
+/**
+ *
+ * @param beforeFn function
+ * @param beforePredicate Promise|function
+ * @param fn function
+ * @returns {function(...[*]): Promise<boolean|*>}
+ */
 function before(beforeFn, beforePredicate, fn) {
-    return function (...args) {
+    return async function (...args) {
         if (beforePredicate && typeof beforePredicate !== 'function') {
             throw new Error('beforePredicate must be a function')
         }
@@ -16,7 +23,7 @@ function before(beforeFn, beforePredicate, fn) {
             throw new Error('fn must be a function')
         }
         const beforeResult = beforeFn();
-        if (beforePredicate && !beforePredicate(beforeResult)) {
+        if (beforePredicate && !await beforePredicate(beforeResult)) {
             // beforePredicate返回了false
             return false
         }
@@ -25,8 +32,15 @@ function before(beforeFn, beforePredicate, fn) {
     }
 }
 
+/**
+ *
+ * @param afterFn
+ * @param afterPredicate Promise|function
+ * @param fn
+ * @returns {function(...[*]): Promise<*>}
+ */
 function after(afterFn, afterPredicate, fn) {
-    return function (...args) {
+    return async function (...args) {
         if (!afterFn) {
             throw new Error('afterFn must be require')
         }
@@ -40,7 +54,7 @@ function after(afterFn, afterPredicate, fn) {
             throw new Error('fn must be a function')
         }
         const result = fn(...args)
-        if (afterPredicate && !afterPredicate(result)) {
+        if (afterPredicate && !await afterPredicate(result)) {
             // afterPredicate 返回了false
             return result
         }
@@ -50,24 +64,4 @@ function after(afterFn, afterPredicate, fn) {
     }
 }
 
-// export {before, after}
-
-
-const obj = {
-    log() {
-        console.log(2)
-    }
-}
-// obj.log = before(() => {
-//     console.log(1)
-//     return true
-// }, val=>val, obj.log)
-// obj.log = before(() => {
-//     console.log(0)
-//     return true
-// }, val => val, before(() => console.log(1), undefined, obj.log))
-obj.log = after(() => console.log(3), undefined, before(() => console.log(1), undefined, obj.log))
-// obj.log()
-obj.log = before(() => console.log(0), undefined, after(() => console.log(4), undefined, obj.log))
-// obj.log()
-obj.log()
+export {before, after}
