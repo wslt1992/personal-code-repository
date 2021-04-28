@@ -2,25 +2,40 @@ import { Message } from 'element-ui'
 import Vue, { DirectiveOptions } from 'vue'
 import { DirectiveBinding } from 'vue/types/options'
 /*
-依赖element-ui,Message,icon
   用法
-    <div v-copy="copyRight" >{{copyRight}}</div>
+* <el-button
+    v-copy-icon="scope.row.id"
+    type="text"
+    style="margin-top: -6px; margin-left: 3px;"
+    class="el-icon-document-copy"
+  ></el-button>
+
+  用法2
+   <span  v-copy-icon="{icon:'el-icon-document-copy',value:scope.row.zip,tips:'点击复制邮编'}">{{ scope.row.zip }}</span>
+
 * */
 
 const icon = 'el-icon-document-copy'
 
-function getContainer (icon = 'el-icon-document-copy') {
+function getContainer (icon = 'el-icon-document-copy', tips = '点击复制') {
   const Container = Vue.extend({
     name: 'Container',
-    template: `<el-tooltip class="item" effect="dark" content="点击复制" placement="top-start">
+    /* template: `<el-tooltip class="item" effect="dark" content="点击复制" placement="top-start">
       <i class="${icon}"></i>
-    </el-tooltip>`
+    </el-tooltip>`, */
+    render (h) {
+      return h('el-tooltip',
+          { class: 'item', props: { effect: 'dark', content: tips, placement: 'top-start' } },
+          [h('i', { class: icon })]
+      )
+    }
   })
   return new Container().$mount()
 }
 
+interface ValueOptions {icon:string, value:string, tips:string}
 interface HTMLElementCopy extends HTMLElement{
-  $value:string,
+  $value:string|ValueOptions,
   handler:()=>void
 }
 const vCopyIcon:DirectiveOptions = {
@@ -33,12 +48,12 @@ const vCopyIcon:DirectiveOptions = {
     if (!parent) {
       return
     }
-    value = value as {icon:string, value:string}
+    value = value as {icon:string, value:string, tips:string}
     // this.icon = value.icon
     // const container = getContainer(!this.icon ? undefined : this.icon)
     // res
     // container.appendChild(el)
-    const container = getContainer()
+    const container = getContainer(value.icon, value.tips)
     el.appendChild(container.$el)
   },
   bind (el:HTMLElement, { value }:DirectiveBinding) {
@@ -57,7 +72,13 @@ const vCopyIcon:DirectiveOptions = {
       textarea.style.position = 'absolute'
       textarea.style.left = '-9999px'
       // 将要 copy 的值赋给 textarea 标签的 value 属性
-      textarea.value = elc.$value
+      const $value = elc.$value
+      if (typeof $value === 'object') {
+        textarea.value = $value.value
+      } else if (typeof $value === 'string' || typeof $value === 'number') {
+        textarea.value = $value
+      }
+
       // 将 textarea 插入到 body 中
       document.body.appendChild(textarea)
       // 选中值并复制
@@ -74,7 +95,7 @@ const vCopyIcon:DirectiveOptions = {
   },
   // 当传进来的值更新的时候触发
   componentUpdated (el:HTMLElement, { value }:DirectiveBinding) {
-    (el as HTMLElementCopy).$value = value.value
+    (el as HTMLElementCopy).$value = value
   },
   // 指令与元素解绑的时候，移除事件绑定
   unbind (el:HTMLElement) {
