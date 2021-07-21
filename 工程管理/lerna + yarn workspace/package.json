@@ -1,0 +1,12 @@
+{
+  "name": "root",
+  "private": true,
+  "npmClient": "yarn",
+  "devDependencies": {
+    "lerna": "^4.0.0"
+  },
+  "workspaces": ["packages/*"],
+  "scripts": {
+    "build": "lerna run --stream --sort build"
+  }
+}
