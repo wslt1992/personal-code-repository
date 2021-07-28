@@ -63,6 +63,10 @@ export default class UserComponent extends Vue {
   created() {
       //# 向Director发送数据
     this.$emit('changeCustome', { str: '使用vue自带$emit发送数据' })
+      // 使用close关闭窗口，close为默认，由closeName决定关闭窗口函数
+      this.close()
+      //使用open关闭窗口，open为默认，由openName决定关闭窗口函数 
+      this.open()
   }
 }
 ```
@@ -73,9 +77,8 @@ export default class UserComponent extends Vue {
   - 决定Director接收数据的函数
   - 决定UserComponent回传数据事件
 - UserComponent以props方式接收Director发送的数据，字段为emitData
-
 - `openName: 'open' closeName: 'close'`分别指定开启和关闭弹窗的函数名
-
+- 这两个函数可以在**弹出组件**和**被注入组件**以 `this.open()` `this.close()`调用，分别打开或关闭窗口
 - `@InjectDialog`，
   - param1，需要被弹出的内容。
   - param2：指定各个函数名或事件名。
