@@ -5,8 +5,8 @@ export default InjectDrawer
 
 /*
  *  组件类上使用
- *  component: 需要被显示的内容封装后的组件
- *  option:{ title: '服务接口使用协议' } 定义完全由element-ui决定，需要绑定的属性options
+ *  // component: 需要被显示的内容封装后的组件
+ *  // option:{ title: '服务接口使用协议' } 定义完全由element-ui决定，需要绑定的属性options
  *  @InjectDrawer(component, { title: '服务接口使用协议' })
  * */
 
@@ -24,5 +24,31 @@ export default InjectDrawer
 * 分别调用，打开弹窗
    ;(this as any).open() //打开Dialog
     ;(this as any).openDrawer()// 打开Drawer
+*
+* */
+
+/*
+* 数据通信
+*
+* 弹窗页 发送数据
+* ;(this as any).change({ lt: 'UseAgreem内容弹窗 向 主页 发送数据 ' })
+*
+* 主页使用change接收数据
+* change(v: any) {
+    console.log('接收到数据：', v)
+  }
+  * **************************
+
+* 主页 向 弹出页 发送数据
+* (this as any).emit('index page emit data')
+
+* 弹出页 接收数据，定义props
+* // 这是注解写法
+*   @Prop() readonly emitData: any
+* // 或 vue options写法
+* props:{
+*   emitData: {}
+* }
+*
 *
 * */

@@ -1,12 +1,13 @@
 import { Component } from 'vue/types/options'
 import Vue, { VNode } from 'vue'
+
 export interface HandlerName {
   openName: string
   closeName: string
 }
 export default function generatePopup(popupComponent: Component) {
   function _dialog(ctor: Component, options: any = {}, el = document.body) {
-    const visible = Vue.observable({ visible: false })
+    const visible = Vue.observable({ visible: false, emitData: {} })
     const PopupComponentContainer = Vue.extend({
       name: 'DialogOperation',
       components: {
@@ -24,10 +25,15 @@ export default function generatePopup(popupComponent: Component) {
           <div class="dialog_operation">
             <popup-component
               visible={visible.visible}
+              close-on-click-modal={false}
+              close-on-press-escape={false}
+              wrapperClosable={false}
               {...data}
               {...{ attrs: options }}
             >
-              {$createElement(ctor)}
+              {$createElement(ctor, {
+                props: { emitData: visible.emitData },
+              })}
             </popup-component>
           </div>
         )
@@ -48,6 +54,9 @@ export default function generatePopup(popupComponent: Component) {
       },
       close() {
         visible.visible = false
+      },
+      emit(v: any) {
+        visible.emitData = v
       },
     }
   }
@@ -74,29 +83,40 @@ export default function generatePopup(popupComponent: Component) {
     return function(ctor: Component) {
       if (!isHandlerName(handlerName)) {
         options = handlerName
-        const { open, close } = _dialog(target, options)
-        ;(ctor as any).prototype.close = close
-        ;(ctor as any).prototype.open = open
-        /* 注入函数到被弹出内容组件 */
-        /* 相当于注入到了组件的option中 */
-        ;(target as any).prototype.close = close
-        ;(target as any).prototype.open = open
-      } else {
-        const { open, close } = _dialog(target, options)
-        const openClose = {
-          [handlerName.openName]: open,
-          [handlerName.closeName]: close,
-        }
-        ;(ctor as any).prototype.constructor.options.methods = {
-          ...openClose,
-          ...(ctor as any).prototype.constructor.options.methods,
-        }
-        /* 注入函数到被弹出内容组件 */
-        ;(target as any).prototype.constructor.options.methods = {
-          ...openClose,
-          ...(target as any).prototype.constructor.options.methods,
+        handlerName = {
+          openName: 'open',
+          closeName: 'close',
         }
       }
+      const { open, close, emit } = _dialog(target, options)
+      const openClose = {
+        [(handlerName as HandlerName).openName]: open,
+        [(handlerName as HandlerName).closeName]: close,
+      }
+      /* 向主页（被注入页）添加函数 */
+      const ctorMethod = (ctor as any).prototype.constructor.options.methods
+      ;(ctor as any).prototype.constructor.options.methods = {
+        ...openClose,
+        emit,
+        ...ctorMethod,
+      }
+
+      /* 注入函数到被弹出内容组件 */
+      const targetMethod = (target as any).prototype.constructor.options.methods
+
+      ;(target as any).prototype.constructor.options.methods = {
+        ...openClose,
+        ...targetMethod,
+      }
+
+      /* 将主页函数change，注入到内容弹窗页 */
+      /* 当弹窗页数据出现变化，可以调用change，通知主页变化后的数据 */
+      /* hack 不能写为内联变量，语法检测有误，?? 语法无法识别，并出现换行时，识别报错 */
+      // eslint-disable-next-line prettier/prettier
+       const change = (ctor as any).prototype.constructor.options.methods.change ?? function() {
+        throw new Error('注入也没有提供数据接收函数，默认为函数change')
+      }
+      ;(target as any).prototype.constructor.options.methods.change = change
     }
   }
 
