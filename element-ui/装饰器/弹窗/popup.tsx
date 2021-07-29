@@ -42,8 +42,15 @@ export default function generatePopup(popupComponent: Component) {
       },
     })
 
-    el.append(new PopupComponentContainer().$mount().$el)
-
+let popup:Vue ;
+    function clear(){
+      el.removeChild(popup.$el)
+      popup.$destroy()
+    }
+    function append(){
+       popup = new PopupComponentContainer().$mount()
+      el.append(popup.$el)
+    }
     return {
       switch(v: boolean) {
         visible.visible = v
@@ -53,9 +60,11 @@ export default function generatePopup(popupComponent: Component) {
       },
       open() {
         visible.visible = true
+        append()
       },
       close() {
         visible.visible = false
+        clear()
       },
       emit(v: any) {
         visible.emitData = v
@@ -63,63 +72,61 @@ export default function generatePopup(popupComponent: Component) {
     }
   }
 
-  function isHandlerName(x: any): x is HandlerName {
+  /* function isHandlerName(x: any): x is HandlerName {
     return x.openName || x.closeName||x.changeName
-  }
-  const handlerNameInit:HandlerName = {
+  } */
+  /* const handlerNameInit:HandlerName = {
     openName: 'open',
     closeName: 'close',
     changeName:'change'
-  }
-  // eslint-disable-next-line no-redeclare
-  function InjectPopup(target: Component, options?: Object): any
-  // eslint-disable-next-line no-redeclare
+  } */
+  let openCloseEmitFns:Record<string,Function> = {}
   function InjectPopup(
     target: Component,
-    handlerName: HandlerName,
-    options?: Object,
-  ): any
-  // eslint-disable-next-line no-redeclare
-  function InjectPopup(
-    target: Component,
-    handlerName: HandlerName | Object = handlerNameInit,
+    eventName: string,
     options?: Object,
   ) {
     return function(ctor: Component) {
-      if (!isHandlerName(handlerName)) {
-        options = handlerName
-        handlerName = handlerNameInit
-      }else{
-        handlerName = {...handlerNameInit,...handlerName}
-      }
-      // 绕开ts检测，并且断定handlername属性全部存在
-      const handlerNameRequired = handlerName as Required<HandlerName>
       // 被注入页（主页）,指定接收数据函数的函数名
-      const changeName = handlerNameRequired.changeName
+      const eventChangeName = `${eventName}:change`
+      const changeName = `change`
       // 从被注入页（主页）中获取函数[changeName]
       // eslint-disable-next-line prettier/prettier
-      const change = (ctor as any).prototype.constructor.options.methods?.[changeName] ?? function() {
+      const change = (ctor as any).prototype.constructor.options.methods?.[eventChangeName] ?? function() {
         throw new Error(`被注入组件没有提供消息接收函数${changeName}，默认为函数change`)
       }
 
       // 从被注入组件（主页）获取到函数change，当参数传递出去。
       // 函数将被change绑定到 弹出组件 [changeName]事件
       // 既 ：被注入组件的函数change（函数名由changeName决定），绑定到 弹窗组件，绑定事件由changeName决定
-      const { open, close, emit } = _dialog(target, {...options,change,changeName})
+      const { open, close, emit,toggle } = _dialog(target, {...options,change,changeName})
 
-      // openName、closeName分别决定弹窗的开启和关闭。
-      const openClose = {
-        [handlerNameRequired.openName]: open,
-        [handlerNameRequired.closeName]: close,
+      const openCloseEmitFnsTemp = {
+        [`${eventName}:open`]: open,
+        [`${eventName}:toggle`]: toggle,
+        [`${eventName}:close`]: close,
+        [`${eventName}:emit`]: emit,
+      }
+      openCloseEmitFns = {
+        ...openCloseEmitFnsTemp,
+        ...openCloseEmitFns
       }
       /*  向主组件（被注入组件）添加open，close 函数 */
       const ctorMethod = (ctor as any).prototype.constructor.options.methods
       ;(ctor as any).prototype.constructor.options.methods = {
-        ...openClose,
-        emit,
+        $popup(eventName:string,data:any){
+          openCloseEmitFns[eventName](data)
+        },
         ...ctorMethod,
       }
 
+
+// openName、closeName分别决定弹窗的开启和关闭。
+      const openClose = {
+        open,
+        close,
+        toggle
+      }
       /*  注入函数open，close 到被弹出组件 */
       const targetMethod = (target as any).prototype.constructor.options.methods
 

@@ -1,33 +1,9 @@
 ### @InjectDialog
 
 ```typescript
-/*
-@InjectDialog(
-  useAgreement
-)
-*/
 
-
-/*
-@InjectDialog(
-  useAgreement,
-  { changeName: 'changeCustome',openName: 'open', closeName: 'close' },
-)
-*/
-
-
-/* 省略参数2自定义名字，直接写参数3
-@InjectDialog(
-  useAgreement,
-  { title: '服务接口使用协议' },
-)
-*/
-
-@InjectDialog(
-  useAgreement,
-  { changeName: 'changeCustome',openName: 'open', closeName: 'close' },
-  { title: '服务接口使用协议' },
-)
+@InjectDialog(useAgreement, 'agreement', { title: '服务接口使用协议' })
+@InjectDialog(apply, 'apply', { title: '服务接口申请' })
 @Component({
   components: {
     TabPage,
@@ -36,15 +12,35 @@
 })
 export default class Director extends Vue {
   created() {
-      // 打开弹窗open，函数名可以被指定
-    ;(this as any).open()
-      // 向UseAgreement发送数据
-    ;(this as any).emit('Director')
+      // 打开窗口
+    ;(this as any).$popup('agreement:open')
+    ;(this as any).$popup('apply:open')
+      
+     //向UseAgreement发送数据
+    ;(this as any).$popup('agreement:emit', 'index page emit data')
+     //向apply发送数据
+    ;(this as any).$popup('apply:emit', 'index page emit data apply')
+      
+      
+    setTimeout(() => {
+        // 关闭窗口
+      ;(this as any).$popup('agreement:close')
+      ;(this as any).$popup('apply:close')
+    }, 3000)
 
+    // 切换窗口  
+ 	;(this as any).$popup('agreement:toggle')
+ 	;(this as any).$popup('apply:toggle')
+     
   }
-    // # 接收userAgreement发送的数据
-    changeCustome(v: any) {
-    	console.log('接收到数据：', v)
+   /* 接收apply发出的数据 */
+  ['apply:change'](v: any) {
+    console.log('接收到数据：', v)
+  }
+
+  /* 接收agreement发出的数据 */
+  ['agreement:change'](v: any) {
+    console.log('接收到数据：', v)
   }
 }
 ```
@@ -76,12 +72,11 @@ export default class UserComponent extends Vue {
 - changeName: 指定通信事件'changeCustome'
   - 决定Director接收数据的函数
   - 决定UserComponent回传数据事件
-- UserComponent以props方式接收Director发送的数据，字段为emitData
-- `openName: 'open' closeName: 'close'`分别指定开启和关闭弹窗的函数名
-- 这两个函数可以在**弹出组件**和**被注入组件**以 `this.open()` `this.close()`调用，分别打开或关闭窗口
+- 主
+- 这两个函数可以在**弹出组件**以 `this.open()` `this.close()`调用，分别打开或关闭窗口
 - `@InjectDialog`，
   - param1，需要被弹出的内容。
-  - param2：指定各个函数名或事件名。
+  - param2：指定事件名。
   - param3：原element-ui下**el-dialog**、**el-drawer**的配置项
   - 省略参数2自定义名字，直接写参数3。参见上文注释代码
 
@@ -91,11 +86,10 @@ export default class UserComponent extends Vue {
 
 `@InjectDrawer` `@InjectDialog`使用方式相同
 
-```
+
+```typescript
 @InjectDrawer(
-  useAgreement,
-  { changeName: 'changeCustome', openName: 'openDrawer', closeName: 'closeDrawer' },
-  { title: '服务接口使用协议' },
+  apply, 'apply', { title: '服务接口申请' },
 )
 ```
 
@@ -103,4 +97,4 @@ export default class UserComponent extends Vue {
 
 ### 注意
 
-- 同时使用`@InjectDrawer`、`@InjectDialog`，或使用多次使用，需要指定{ changeName: 'changeCustome', openName: 'openDrawer', closeName: 'closeDrawer' }，函数名必须唯一
+- 同时使用`@InjectDrawer`、`@InjectDialog`，或使用多次使用，需要指定event名，名必须唯一
