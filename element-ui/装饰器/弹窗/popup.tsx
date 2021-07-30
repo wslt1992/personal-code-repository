@@ -43,13 +43,21 @@ export default function generatePopup(popupComponent: Component) {
     })
 
 let popup:Vue ;
+
+    /**
+     * 清理对象
+     */
     function clear(){
-      el.removeChild(popup.$el)
-      popup.$destroy()
+        el.removeChild(popup.$el)
+        popup.$destroy()
+
     }
+    /**
+     *  new组件对象，并添加到body下
+     */
     function append(){
        popup = new PopupComponentContainer().$mount()
-      el.append(popup.$el)
+      el.appendChild(popup.$el)
     }
     return {
       switch(v: boolean) {
@@ -86,21 +94,7 @@ let popup:Vue ;
     eventName: string,
     options?: Object,
   ) {
-    return function(ctor: Component) {
-      // 被注入页（主页）,指定接收数据函数的函数名
-      const eventChangeName = `${eventName}:change`
-      const changeName = `change`
-      // 从被注入页（主页）中获取函数[changeName]
-      // eslint-disable-next-line prettier/prettier
-      const change = (ctor as any).prototype.constructor.options.methods?.[eventChangeName] ?? function() {
-        throw new Error(`被注入组件没有提供消息接收函数${changeName}，默认为函数change`)
-      }
-
-      // 从被注入组件（主页）获取到函数change，当参数传递出去。
-      // 函数将被change绑定到 弹出组件 [changeName]事件
-      // 既 ：被注入组件的函数change（函数名由changeName决定），绑定到 弹窗组件，绑定事件由changeName决定
-      const { open, close, emit,toggle } = _dialog(target, {...options,change,changeName})
-
+    function injectFnToTarget(open: () => void, toggle: () => void, close: () => void, emit: (v: any) => void, ctor: Component) {
       const openCloseEmitFnsTemp = {
         [`${eventName}:open`]: open,
         [`${eventName}:toggle`]: toggle,
@@ -109,31 +103,53 @@ let popup:Vue ;
       }
       openCloseEmitFns = {
         ...openCloseEmitFnsTemp,
-        ...openCloseEmitFns
+        ...openCloseEmitFns,
       }
-      /*  向主组件（被注入组件）添加open，close 函数 */
-      const ctorMethod = (ctor as any).prototype.constructor.options.methods
-      ;(ctor as any).prototype.constructor.options.methods = {
-        $popup(eventName:string,data:any){
-          openCloseEmitFns[eventName](data)
-        },
-        ...ctorMethod,
+      /*  挂在到全局添加open，close 函数 */
+        Vue.prototype.$popup = function $popup(eventName: string, data: any) {
+        openCloseEmitFns[eventName](data)
       }
 
+    }
 
-// openName、closeName分别决定弹窗的开启和关闭。
+    function injectFnToCtor(open: () => void, close: () => void, toggle: () => void) {
+    // openName、closeName分别决定弹窗的开启和关闭。
       const openClose = {
         open,
         close,
-        toggle
+        toggle,
       }
       /*  注入函数open，close 到被弹出组件 */
-      const targetMethod = (target as any).prototype.constructor.options.methods
+      const targetMethod = (target as any).options.methods
 
-      ;(target as any).prototype.constructor.options.methods = {
+      ;(target as any).options.methods = {
         ...openClose,
         ...targetMethod,
       }
+    }
+
+    function getFnChange(ctor: Component, eventChangeName: string) {
+      // eslint-disable-next-line prettier/prettier
+      return (ctor as any).options.methods?.[eventChangeName] ?? function() {
+        throw new Error(`被注入组件没有提供消息接收函数${eventChangeName}，默认为函数change`)
+      }
+    }
+
+    return function(ctor: Component) {
+      // 被注入页（主页）,指定接收数据函数的函数名
+      const eventChangeName = `${eventName}:change`
+      const changeName = `change`
+      // 从被注入页（主页）中获取函数[changeName]
+      const change = getFnChange(ctor, eventChangeName)
+
+      // 从被注入组件（主页）获取到函数change，当参数传递出去。
+      // 函数将被change绑定到 弹出组件 [changeName]事件
+      // 既 ：被注入组件的函数change（函数名由changeName决定），绑定到 弹窗组件，绑定事件由changeName决定
+      const { open, close, emit,toggle } = _dialog(target, {...options,change,changeName})
+
+      injectFnToTarget(open, toggle, close, emit, ctor)
+      injectFnToCtor(open, close, toggle)
+
     }
   }
 
