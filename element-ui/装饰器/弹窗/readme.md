@@ -98,3 +98,18 @@ export default class UserComponent extends Vue {
 ### 注意
 
 - 同时使用`@InjectDrawer`、`@InjectDialog`，或使用多次使用，需要指定event名，名必须唯一
+
+
+
+### 给vue添加类型定义
+
+给vue添加类型定义，`this.$popup()`
+
+```typescript
+declare module 'vue/types/vue' {
+    interface Vue {
+    	$popup: Function
+    }
+}
+```
+
