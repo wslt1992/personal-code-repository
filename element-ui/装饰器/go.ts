@@ -1,7 +1,7 @@
 import { RawLocation } from 'vue-router/types/router'
-import { RouterGO } from '~/pages/apiServices/router-go'
+import { RouterGO } from '~/pages/resourceSharing/apiServices/router-go'
 
-@RouterGO('/apiServices/applicant')
+@RouterGO('/resourceSharing/apiServices/applicant')
 class RouterApi {
   /**
    * 跳转到申请页
@@ -23,12 +23,20 @@ class RouterApi {
     return { path: '/applied-api' }
   }
 
+  goAppliedApiCustom(): RawLocation {
+    return '/custom-api-apply'
+  }
+
+  goApiLog(): RawLocation {
+    return '/api-log'
+  }
+
   goAPIDocument(id: number | string): RawLocation {
-    return '/document-api' + id
+    return '/document-api/' + id
   }
 }
 
-@RouterGO('/apiServices/manager')
+@RouterGO('/resourceSharing/apiServices/manager')
 class ManagerApi {
   goManagerAudit(): RawLocation {
     return '/audit'
@@ -39,6 +47,23 @@ class ManagerApi {
   }
 }
 
+@RouterGO('/resourceSharing/commonInterface')
+class ManagerApi2 {
+  goIndex(): RawLocation {
+    return '/'
+  }
+
+  goCreate(): RawLocation {
+    return '/create'
+  }
+
+  goDetail(id: number): RawLocation {
+    return '/detail/' + id
+  }
+}
+
 export default new RouterApi()
 
-export const managerApi = new ManagerApi()
+const managerApi = new ManagerApi()
+const managerApi2 = new ManagerApi2()
+export { managerApi, managerApi2 }
