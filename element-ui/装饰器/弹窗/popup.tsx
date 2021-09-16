@@ -1,13 +1,26 @@
 import { Component } from 'vue/types/options'
 import Vue, { VNode } from 'vue'
 
+let router:any
+let $axios:any
+export function setRouter(app:any){
+  router = app.router
+  $axios = app.$axios
+}
 export interface HandlerName {
   openName?: string
   closeName?: string
   changeName?: string
 }
+ declare module 'vue/types/vue' {
+  interface Vue {
+    $popup: (event:string,data?:Record<string, any>)=>void
+  }
+}
+let openCloseEmitFns:Record<string,Function> = {}
+
 export default function generatePopup(popupComponent: Component) {
-  function _dialog(ctor: Component, options: any = {}, el = document.body) {
+  const _dialog = (ctor: Component, options: any = {}, el = document.body) => {
     const visible = Vue.observable({ visible: false, emitData: {} })
     const PopupComponentContainer = Vue.extend({
       name: 'DialogOperation',
@@ -16,6 +29,15 @@ export default function generatePopup(popupComponent: Component) {
       },
       data() {
         return {}
+      },
+      watch:{
+        $route: {
+          handler(newVal, oldVal){
+            clear()
+          },
+          // 深度观察监听
+          deep: true
+        }
       },
       render(): VNode {
         const data = {
@@ -33,7 +55,7 @@ export default function generatePopup(popupComponent: Component) {
               {...{ attrs: options }}
             >
               {$createElement(ctor, {
-                props: { emitData: visible.emitData },
+                props: { ...visible.emitData },
                 on: { [options.changeName]:options.change },
               })}
             </popup-component>
@@ -42,37 +64,54 @@ export default function generatePopup(popupComponent: Component) {
       },
     })
 
-let popup:Vue ;
+let popup:Vue|null ;
 
     /**
      * 清理对象
      */
     function clear(){
+        if(!popup){
+          // throw new Error('popup is null')
+          return
+        }
         el.removeChild(popup.$el)
         popup.$destroy()
+        popup = null
 
     }
     /**
      *  new组件对象，并添加到body下
      */
-    function append(){
-       popup = new PopupComponentContainer().$mount()
+      function append(){
+        if(!(router&&$axios)){
+          throw new Error("需要调用setRouter设置router和$axios")
+        }
+        if(popup) return
+        // @ts-ignore $axios没有定义，所以会报错，然而依赖$axios
+       popup = new PopupComponentContainer({router,$axios}).$mount()
       el.appendChild(popup.$el)
     }
+    /* hack router对象可能获取不到，需要等下一轮执行 */
+    setTimeout(() =>{
+      append()
+    })
+
     return {
       switch(v: boolean) {
         visible.visible = v
       },
       toggle() {
+        /* 先初始化弹窗，再改变显示状态 */
+        append()
         visible.visible = !visible.visible
       },
-      open() {
-        visible.visible = true
+      open(v:any) {
         append()
+        visible.visible = true
+        visible.emitData = v
       },
       close() {
         visible.visible = false
-        clear()
       },
       emit(v: any) {
         visible.emitData = v
@@ -88,13 +127,12 @@ let popup:Vue ;
     closeName: 'close',
     changeName:'change'
   } */
-  let openCloseEmitFns:Record<string,Function> = {}
   function InjectPopup(
     target: Component,
     eventName: string,
     options?: Object,
   ) {
-    function injectFnToTarget(open: () => void, toggle: () => void, close: () => void, emit: (v: any) => void, ctor: Component) {
+    function injectFnToTarget(open: (v: any) => void, toggle: () => void, close: () => void, emit: (v: any) => void, ctor: Component) {
       const openCloseEmitFnsTemp = {
         [`${eventName}:open`]: open,
         [`${eventName}:toggle`]: toggle,
@@ -102,17 +140,19 @@ let popup:Vue ;
         [`${eventName}:emit`]: emit,
       }
       openCloseEmitFns = {
-        ...openCloseEmitFnsTemp,
         ...openCloseEmitFns,
+        ...openCloseEmitFnsTemp,
       }
       /*  挂在到全局添加open，close 函数 */
-        Vue.prototype.$popup = function $popup(eventName: string, data: any) {
-        openCloseEmitFns[eventName](data)
+      if(!Vue.prototype.$popup){
+          Vue.prototype.$popup = function $popup(eventName: string, data: any) {
+          openCloseEmitFns[eventName](data)
+        }
       }
 
     }
 
-    function injectFnToCtor(open: () => void, close: () => void, toggle: () => void) {
+    function injectFnToCtor(open: (v: any) => void, close: () => void, toggle: () => void) {
     // openName、closeName分别决定弹窗的开启和关闭。
       const openClose = {
         open,

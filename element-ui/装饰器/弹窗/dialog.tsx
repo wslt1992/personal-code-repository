@@ -1,5 +1,5 @@
 import { Dialog } from '@femessage/element-ui'
-import generatePopup from '~/pages/apiServices/lib/popup'
+import generatePopup from '~/pages/resourceSharing/apiServices/lib/popup'
 const InjectDialog = generatePopup(Dialog)
 export default InjectDialog
 /*

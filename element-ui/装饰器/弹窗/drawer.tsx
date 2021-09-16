@@ -1,5 +1,5 @@
 import { Drawer } from '@femessage/element-ui'
-import generatePopup from '~/pages/apiServices/lib/popup'
+import generatePopup from '~/pages/resourceSharing/apiServices/lib/popup'
 const InjectDrawer = generatePopup(Drawer)
 export default InjectDrawer
 
