@@ -19,7 +19,7 @@ export function RouterGO(baseUrl: string) {
       }
       const originalFunction = constructor.prototype[name]
       constructor.prototype[name] = function() {
-        const path = originalFunction()
+        const path = originalFunction(...arguments)
         if (typeof path === 'string') {
           return $router.push(join(baseUrl, path))
         }

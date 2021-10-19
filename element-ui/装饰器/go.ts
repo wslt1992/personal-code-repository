@@ -47,7 +47,7 @@ class ManagerApi {
   }
 }
 
-@RouterGO('/resourceSharing/commonInterface')
+@RouterGO('/resourceSharing/dataServiceMG/commonInterface')
 class ManagerApi2 {
   goIndex(): RawLocation {
     return '/'
