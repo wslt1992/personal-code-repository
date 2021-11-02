@@ -22,7 +22,7 @@ function get$Axios(){
 function get$Router(){
   return window.$nuxt.$router
 }
-const baseUrlSymbol = Symbol('router go baseUrl')
+const baseUrlSymbol = Symbol('request baseUrl')
 
 export function Request(method: Method) {
   return function(target: any, key: string, descriptor: PropertyDescriptor) {
