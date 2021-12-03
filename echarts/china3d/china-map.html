@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+  <meta charset='UTF-8'>
+  <title>Title</title>
+  <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.js"></script>
+  <script src="https://cdn.bootcdn.net/ajax/libs/echarts/5.1.2/echarts.js"></script>
+  <script src="https://cdn.bootcdn.net/ajax/libs/echarts-gl/2.0.7/echarts-gl.js"></script>
+
+</head>
+<body>
+<div id="main" style="width: 100vw; height:100vh;"></div>
+<script>
+  const province1 = ['河北省','山西省','辽宁省','吉林省','黑龙江省','江苏省','浙江省','安徽省','福建省','江西省','山东省','河南省','湖北省','湖南省','广东省','海南省','四川省','贵州省','云南省','陕西省','甘肃省','青海省','台湾省']
+  const province2 = ['北京市','天津市','上海市','重庆市']
+  const province3 = ['内蒙古自治区','广西壮族自治区','西藏自治区','宁夏回族自治区','新疆维吾尔自治区']
+  const province4 = ['香港特别行政区','澳门特别行政区']
+  const provinces = [...province1,...province2,...province3,...province4]
+
+  const data = provinces.map(name=>{
+    const v = Math.random()*100
+    return { name,
+      value: v,
+      height: v/30
+    }
+  })
+  var myChart =  echarts.init(document.getElementById('main'));
+  $.get('./china.json', function (json) {
+    echarts.registerMap('china', json);
+    var option = {
+      tooltip: {},
+      visualMap: {
+        show: false,
+        min: 0,
+        max: 100,
+        inRange: {
+          color: [
+            '#313695',
+            '#4575b4',
+            '#74add1',
+            '#abd9e9',
+            '#e0f3f8',
+            '#ffffbf',
+            '#fee090',
+            '#fdae61',
+            '#f46d43',
+            '#d73027',
+            '#a50026'
+
+           /* '#19CAAD',
+            '#8CC7B5',
+            '#A0EEE1',
+            '#BEE7E9',
+            '#BEEDC7',*/
+          ]
+        }
+      },
+      // geo3D: [
+      series: [
+        {
+          name: '中国',
+          type: 'map3D',
+          // type: 'map',
+          map: 'china',
+          boxWidth : 100,
+          boxHeight:100,
+          boxDepth:'auto',
+          regionHeight:1,
+          environment: '#000',
+          realisticMaterial: {
+            roughness: 0.6,
+            textureTiling: 20
+          },
+          groundPlane:{
+            show:true,
+            color: '#333'
+          },
+          emphasis: {
+            label: {
+              show: true
+            }
+          },
+          itemStyle:{
+            borderWidth:1,
+            borderColor:'#fff'
+          },
+          selectedMode: false,
+          data,
+         /* regions:[{
+            name:'湖北省',
+            regionHeight:10,
+            itemStyle:{
+              borderWidth:1,
+              borderColor:'#f00'
+            }
+          }]*/
+        }
+      ],
+    };
+    myChart.setOption(option);
+  });
+</script>
+</body>
+</html>
