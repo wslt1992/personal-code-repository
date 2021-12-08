@@ -1,0 +1,7 @@
+﻿version: "3.9"
+services:
+  web-sol2:
+    build: ./
+    restart: always
+    ports:
+      - 12011:12010
