@@ -7,8 +7,8 @@ export type RequestReturn = AxiosRequestConfig
 /* 将对象中的函数(返回值为RequestReturn)，返回值变化为R */
 export type FnReturnTypeToR<T extends Object,R> = {
   [key in keyof T]: T[key] extends (...args: any[]) => RequestReturn
-    ? (...args: Parameters<T[key]>) => R
-    : T[key]
+      ? (...args: Parameters<T[key]>) => R
+      : T[key]
 }
 export type FnReturnTypeToPromise<T extends Object> = FnReturnTypeToR<T,Promise<any>>
 export type APIReturnPromise<T> = {
@@ -51,9 +51,11 @@ export function Url() {
   }
 }
 
-export function RequestBaseUrl(baseUrl: string) {
+export function RequestBaseUrl(...paths: string[]) {
   return function(target: any) {
-    target.prototype[baseUrlSymbol] = baseUrl
+    target.prototype[baseUrlSymbol] = paths.reduce((path:string,subPath:string)=>{
+      return join(path,subPath)
+    })
   }
 }
 
@@ -62,13 +64,13 @@ const TipsTemplate = [
   { successMsg: '提交成功', errorMsg: '提交失败' },
 ]
 export function RequestTips(
-  msg:Partial<TipsType> | number | string
+    msg:Partial<TipsType> | number | string
 ) {
   msg = typeof msg === 'number' ? TipsTemplate[msg]??'' :
-    typeof msg === 'string' ? {
-      successMsg: msg + '成功',
-      errorMsg: msg + '失败',
-    } : msg
+      typeof msg === 'string' ? {
+        successMsg: msg + '成功',
+        errorMsg: msg + '失败',
+      } : msg
 
   return function(target: any, key: string, descriptor: PropertyDescriptor) {
     const oldValue = descriptor.value
@@ -77,14 +79,14 @@ export function RequestTips(
       if (value instanceof Promise) {
         value.then(isRequestSuccess).then((bool: boolean) => {
           bool
-            ? Message({
-              message: (msg as TipsType).successMsg??'',
-              type: 'success',
-            })
-            : Message({
-              message: (msg as TipsType).errorMsg??'',
-              type: 'error',
-            })
+              ? Message({
+                message: (msg as TipsType).successMsg??'',
+                type: 'success',
+              })
+              : Message({
+                message: (msg as TipsType).errorMsg??'',
+                type: 'error',
+              })
         }).catch(() => {
           // eslint-disable-next-line prettier/prettier
           Message.error({ message: (msg as TipsType).errorMsg??'网络访问出错' })
@@ -97,20 +99,20 @@ export function RequestTips(
 
 
 export function RequestConfirm(
-  tips:string
+    tips:string
 ) {
   return function(target: any, key: string, descriptor: PropertyDescriptor) {
     const oldValue = descriptor.value
     descriptor.value = (...args: any) => {
-        return MessageBox.confirm(tips, '提示', {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          type: 'warning'
-        }).then(() => {
-          return oldValue(...args)
+      return MessageBox.confirm(tips, '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        return oldValue.apply(target,args)
       }).catch(() => {
-          return false
-        });
+        return false
+      });
     }
   }
 }
@@ -131,7 +133,7 @@ export function RequestSuccess() {
 export function RequestPayload() {
   return function(target: any, key: string, descriptor: PropertyDescriptor) {
     const oldMethod = descriptor.value
-    descriptor.value = (...args: any) => {
+    descriptor.value = function(...args: any) {
       const value = oldMethod.apply(target,args)
       if (value instanceof Promise) {
         return value.then(data=>data.data.payload)
@@ -152,7 +154,7 @@ export function RequestBack() {
           if(bool){
             get$Router().back()
           }
-      })}
+        })}
       return value
     }
   }
