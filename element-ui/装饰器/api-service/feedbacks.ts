@@ -43,7 +43,7 @@ export default class Feedbacks {
 
   @RequestTips(0)
   @Request('post')
-  increase(title: string, content: string): RequestReturn {
-    return { url: '', data: { title, content } }
+  increase(content: string): RequestReturn {
+    return { url: '', data: { content } }
   }
 }

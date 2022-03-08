@@ -40,6 +40,15 @@ export default class Apply {
     }
   }
 
+  @RequestConfirm('您确定要删除当前项？')
+  @RequestSuccess()
+  @Request('delete')
+  deletee(applyId: string): RequestReturn {
+    return {
+      url: `/${applyId}`,
+    }
+  }
+
   @RequestPayload()
   @Request('get')
   details(applyId: string): RequestReturn {

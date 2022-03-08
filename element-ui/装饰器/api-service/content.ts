@@ -1,9 +1,10 @@
 import {
   Request,
-  RequestBack,
   RequestBaseUrl,
+  RequestConfirm,
   RequestPayload,
   RequestReturn,
+  RequestSuccess,
   RequestTips,
   Url,
 } from '~/pages/resourceSharing/apiServices/request'
@@ -18,22 +19,18 @@ enum ContentType {
 
 @RequestBaseUrl(RECORD_SERVER + '/contents')
 export default class Content {
+  @RequestSuccess()
+  @RequestTips(0)
   @Request('post')
   increase(data: {
     title: string
     content: string
-    type: ContentType
+    type: string
   }): RequestReturn {
     return { url: '', data }
   }
 
-  @RequestBack()
-  @RequestTips(0)
-  increaseStandard(data: { title: string; content: string }): RequestReturn {
-    return this.increase({ ...data, type: ContentType.STANDARD })
-  }
-
-  @RequestBack()
+  @RequestSuccess()
   @RequestTips(0)
   @Request('put')
   update(data: {
@@ -42,7 +39,19 @@ export default class Content {
     type: ContentType
     contentId: string
   }): RequestReturn {
-    return { url: `${data.contentId}`, data }
+    const { title, content, type, contentId } = data
+    return {
+      url: `${data.contentId}`,
+      data: { title, content, type, contentId },
+    }
+  }
+
+  @RequestConfirm('你确定要删除当前内容吗？')
+  @RequestSuccess()
+  @RequestTips('删除')
+  @Request('delete')
+  delete(contentId: string): RequestReturn {
+    return { url: `${contentId}` }
   }
 
   @RequestPayload()

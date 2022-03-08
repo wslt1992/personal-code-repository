@@ -8,15 +8,17 @@ import { RECORD_SERVER } from '~/api/serviceList'
 // import { formatDate } from '~/plugins/filters'
 
 enum UploadType {
-  apps = 2,
-  banner = 3,
+  apps = 'application',
 }
 
 @RequestBaseUrl(RECORD_SERVER)
 export default class Global {
   @Url()
-  uploadUrl(type: number): string {
-    return `minios/image/${type}`
+  uploadUrl(type?: string): string {
+    if (type) {
+      return `/documents/upload?folder=${type}`
+    }
+    return `/documents/upload`
   }
 
   uploadUrlApps(): string {
@@ -24,7 +26,7 @@ export default class Global {
   }
 
   uploadUrlBanner(): string {
-    return this.uploadUrl(UploadType.banner)
+    return this.uploadUrl()
   }
 
   @Request('get')

@@ -47,6 +47,7 @@ export default class InterfaceManager {
     }
   }
 
+  @RequestSuccess()
   @RequestTips('脱敏开启')
   @Request('put')
   desensitizationEnable(id: string): RequestReturn {
@@ -55,11 +56,12 @@ export default class InterfaceManager {
     }
   }
 
+  @RequestSuccess()
   @RequestTips('接口禁用')
   @Request('put')
   statusEnable(id: string): RequestReturn {
     return {
-      url: `${id}//status/disable`,
+      url: `${id}/status/disable`,
     }
   }
 
@@ -93,6 +95,13 @@ export default class InterfaceManager {
     return this.getDetailsInfo(interfaceId)
   }
 
+  @RequestPayload()
+  @Request('get')
+  getEditorDetailsInfo(interfaceId: string): RequestReturn {
+    return {
+      url: `/${interfaceId}/hierarchy/details`,
+    }
+  }
   // @RequestTips('参数修改')
   // @Request('put')
   // putDetailsInfo(interfaceId: string, info: any): RequestReturn {
@@ -134,9 +143,11 @@ export default class InterfaceManager {
   @RequestTips('新增自定义接口')
   @Request('post')
   createCustomApi(data: any): RequestReturn {
+    const { remark } = data
+    delete data.remark
     return {
       url: `/customize`,
-      data,
+      data: { ...data, purpose: remark },
     }
   }
 

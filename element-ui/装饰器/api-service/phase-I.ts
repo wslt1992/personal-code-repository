@@ -16,4 +16,13 @@ export default class PhaseI {
   getIndexTotal(): RequestReturn {
     return { url: '/home/total' }
   }
+
+  @RequestPayload()
+  @Request('post')
+  getDepartment(): RequestReturn {
+    return {
+      url: 'data-catalogue/v1/org/catalogueOrg/queryOrgTree',
+      data: { appId: 11, tenantId: '11' },
+    }
+  }
 }

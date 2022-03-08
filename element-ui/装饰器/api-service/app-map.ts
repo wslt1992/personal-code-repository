@@ -52,7 +52,12 @@ export default class AppMap {
   @Request('put')
   update(
     applicationTypeId: string,
-    data: { name: string; description: string; resourceVersion: number },
+    data: {
+      name: string
+      description: string
+      resourceVersion: number
+      enable: boolean
+    },
   ): RequestReturn {
     return {
       url: `/${applicationTypeId}`,
@@ -63,8 +68,8 @@ export default class AppMap {
   @RequestSuccess()
   @RequestTips(0)
   @Request('post')
-  increase(name: string, description: string): RequestReturn {
-    return { url: '', data: { name, description } }
+  increase(name: string, description: string, enable: boolean): RequestReturn {
+    return { url: '', data: { name, description, enable } }
   }
 
   @RequestConfirm('确认删除此应用分类吗')
